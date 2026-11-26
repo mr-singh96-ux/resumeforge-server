@@ -4,7 +4,7 @@ import { model } from "../configs/ai.js";
 
 const generateAIContent = async (prompt) => {
   const result = await model.models.generateContent({
-    model: "gemini-flash-latest",
+    model: "gemini-1.5-flash",
     contents: prompt
   });
 
