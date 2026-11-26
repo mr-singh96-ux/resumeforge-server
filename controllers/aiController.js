@@ -1,5 +1,15 @@
+
 import Resume from "../models/Resume.js";
 import { model } from "../configs/ai.js";
+
+const generateAIContent = async (prompt) => {
+  const result = await model.models.generateContent({
+    model: "gemini-flash-latest",
+    contents: prompt
+  });
+
+  return result.text;
+};
 
 // ==============================
 // Enhance Professional Summary
@@ -11,24 +21,25 @@ export const enhanceProfessionalSummary = async (req, res) => {
     const { userContent } = req.body;
 
     if (!userContent || userContent.trim() === "") {
-      return res.status(400).json({ message: "Summary cannot be empty" });
+      return res.status(400).json({
+        message: "Summary cannot be empty"
+      });
     }
 
     const prompt = `
-    You are an expert resume writer.
+      You are an expert resume writer.
 
-    Improve the following professional summary:
-    - Make it concise (1-2 sentences)
-    - Highlight key skills and strengths
-    - Make it ATS-friendly
-    - Return ONLY the improved summary
+      Improve the following professional summary:
+      - Make it concise (1-2 sentences)
+      - Highlight key skills and strengths
+      - Make it ATS-friendly
+      - Return ONLY the improved summary
 
-    Summary:
-    ${userContent}
+      Summary:
+      ${userContent}
     `;
 
-    const result = await model.generateContent(prompt);
-    const enhancedContent = result.response.text();
+    const enhancedContent = await generateAIContent(prompt);
 
     return res.status(200).json({ enhancedContent });
 
@@ -46,25 +57,26 @@ export const enhanceJobDescription = async (req, res) => {
     const { userContent } = req.body;
 
     if (!userContent || userContent.trim() === "") {
-      return res.status(400).json({ message: "Description cannot be empty" });
+      return res.status(400).json({
+        message: "Description cannot be empty"
+      });
     }
 
     const prompt = `
-    You are an expert resume writer.
+      You are an expert resume writer.
 
-    Improve the following job description:
-    - Keep it 1-2 sentences
-    - Use strong action verbs
-    - Highlight achievements
-    - Make it ATS-friendly
-    - Return ONLY the improved text
+      Improve the following job description:
+      - Keep it 1-2 sentences
+      - Use strong action verbs
+      - Highlight achievements
+      - Make it ATS-friendly
+      - Return ONLY the improved text
 
-    Description:
-    ${userContent}
+      Description:
+      ${userContent}
     `;
 
-    const result = await model.generateContent(prompt);
-    const enhancedContent = result.response.text();
+    const enhancedContent = await generateAIContent(prompt);
 
     return res.status(200).json({ enhancedContent });
 
@@ -83,73 +95,77 @@ export const uploadResume = async (req, res) => {
     const userId = req.userId;
 
     if (!resumeText) {
-      return res.status(400).json({ message: "Missing resume text" });
+      return res.status(400).json({
+        message: "Missing resume text"
+      });
     }
 
     const prompt = `
-    Extract structured data from this resume and return ONLY valid JSON:
+      Extract structured data from this resume and return ONLY valid JSON.
 
-    Resume:
-    ${resumeText}
+      Resume:
+      ${resumeText}
 
-    JSON Format:
-    {
-      "professional_summary": "",
-      "skills": [],
-      "personal_info": {
-        "image": "",
-        "full_name": "",
-        "profession": "",
-        "email": "",
-        "phone": "",
-        "location": "",
-        "linkedin": "",
-        "website": ""
-      },
-      "experience": [
-        {
-          "company": "",
-          "position": "",
-          "start_date": "",
-          "end_date": "",
-          "description": "",
-          "is_current": false
-        }
-      ],
-      "project": [
-        {
-          "name": "",
-          "type": "",
-          "description": ""
-        }
-      ],
-      "education": [
-        {
-          "institution": "",
-          "degree": "",
-          "field": "",
-          "graduation_date": "",
-          "gpa": ""
-        }
-      ]
-    }
+      JSON Format:
+      {
+        "professional_summary": "",
+        "skills": [],
+        "personal_info": {
+          "image": "",
+          "full_name": "",
+          "profession": "",
+          "email": "",
+          "phone": "",
+          "location": "",
+          "linkedin": "",
+          "website": ""
+        },
+        "experience": [
+          {
+            "company": "",
+            "position": "",
+            "start_date": "",
+            "end_date": "",
+            "description": "",
+            "is_current": false
+          }
+        ],
+        "project": [
+          {
+            "name": "",
+            "type": "",
+            "description": ""
+          }
+        ],
+        "education": [
+          {
+            "institution": "",
+            "degree": "",
+            "field": "",
+            "graduation_date": "",
+            "gpa": ""
+          }
+        ]
+      }
     `;
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const text = await generateAIContent(prompt);
 
-    // 🛑 Clean possible markdown (Gemini sometimes adds ```json)
-    const cleaned = text.replace(/```json|```/g, "").trim();
+    // Remove possible Markdown code fences
+    const cleaned = text
+      .replace(/```json/gi, "")
+      .replace(/```/g, "")
+      .trim();
 
     const parsedData = JSON.parse(cleaned);
 
     const newResume = await Resume.create({
       userId,
       title,
-      ...parsedData,
+      ...parsedData
     });
 
-    res.json({ resumeId: newResume._id });
+    return res.json({ resumeId: newResume._id });
 
   } catch (error) {
     console.log("UPLOAD AI ERROR:", error.message);

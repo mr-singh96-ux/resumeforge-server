@@ -1,8 +1,7 @@
 // Import Express framework → used to create server and handle routes (backend API)
 import express from "express";
 
-// Import CORS middleware → allows frontend (different domain/port) to access backend APIs
-import cors from "cors";
+import cors from "cors"; //cross origin resource sharing
 
 // Import dotenv config → loads environment variables from .env file (like DB URL, API keys)
 import "dotenv/config";
@@ -15,11 +14,7 @@ import userRouter from "./routes/userRoutes.js";
 
 // Import resume routes → handles resume-related operations (create, update, fetch resumes)
 import resumeRouter from "./routes/resumeRoutes.js";
-
-// Import AI routes → handles AI features (like generating resume content, suggestions, etc.)
 import aiRouter from "./routes/aiRoutes.js";
-
-// Import image routes → handles image upload, processing, or retrieval
 import imageRouter from "./routes/imageRoutes.js";
 const app = express();
 const PORT = process.env.PORT || 3000;
